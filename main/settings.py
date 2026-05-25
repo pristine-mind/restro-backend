@@ -44,6 +44,9 @@ env = environ.Env(
     ALLOWED_REDIRECT_URLS=(list, ["http://localhost:5173"]),
     # Redis / Channels / Celery
     REDIS_URL=(str, "redis://localhost:6379/0"),
+    # JWT
+    JWT_ACCESS_TOKEN_LIFETIME_MINUTES=(int, 15),
+    JWT_REFRESH_TOKEN_LIFETIME_DAYS=(int, 7),
 )
 
 # Quick-start development settings - unsuitable for production
@@ -70,10 +73,11 @@ INSTALLED_APPS = [
     # "django.contrib.gis",
     "rest_framework",
     "rest_framework.authtoken",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "django_filters",
     "corsheaders",
     "channels",
-    "django_celery_beat",
     # RMS apps
     "apps.accounts",
     "apps.menu",
@@ -273,7 +277,10 @@ TESTING = (
 
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 100,
@@ -284,6 +291,15 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "main.exceptions.custom_exception_handler",
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=env("JWT_ACCESS_TOKEN_LIFETIME_MINUTES")),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=env("JWT_REFRESH_TOKEN_LIFETIME_DAYS")),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
 
 SPECTACULAR_SETTINGS = {
