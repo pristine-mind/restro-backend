@@ -42,6 +42,8 @@ env = environ.Env(
     # Frontend & Google OAuth2
     FRONTEND_URL=(str, "http://localhost:5173"),
     ALLOWED_REDIRECT_URLS=(list, ["http://localhost:5173"]),
+    # Redis / Channels / Celery
+    REDIS_URL=(str, "redis://localhost:6379/0"),
 )
 
 # Quick-start development settings - unsuitable for production
@@ -58,16 +60,26 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOST")
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django.contrib.gis",
+    # "django.contrib.gis",
     "rest_framework",
     "rest_framework.authtoken",
     "django_filters",
+    "corsheaders",
+    "channels",
+    "django_celery_beat",
+    # RMS apps
+    "apps.accounts",
+    "apps.menu",
+    "apps.tables",
+    "apps.orders",
+    "apps.billing",
 ]
 
 MIDDLEWARE = [
@@ -102,14 +114,32 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "main.wsgi.application"
+ASGI_APPLICATION = "main.asgi.application"
 
+# Channels
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [env("REDIS_URL")],
+        },
+    },
+}
+
+# Celery
+CELERY_BROKER_URL = env("REDIS_URL")
+CELERY_RESULT_BACKEND = env("REDIS_URL")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.contrib.gis.db.backends.postgis",
+        "ENGINE": "django.db.backends.postgresql",
         "HOST": env("DB_HOST"),
         "PORT": env("DB_PORT"),
         "NAME": env("DB_NAME"),
@@ -175,7 +205,7 @@ MEDIA_ROOT = env("DJANGO_MEDIA_ROOT")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Custom User Model
-# AUTH_USER_MODEL = "user.User"
+AUTH_USER_MODEL = "accounts.User"
 
 # Frontend & Redirect URLs Configuration
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
@@ -243,10 +273,8 @@ TESTING = (
 
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.TokenAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 100,
     "DEFAULT_FILTER_BACKENDS": (
@@ -254,46 +282,13 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "EXCEPTION_HANDLER": "main.exceptions.custom_exception_handler",
 }
 
-
-TINYMCE_DEFAULT_CONFIG = {
-    "entity_encoding": "raw",
-    "height": 360,
-    "width": 1120,
-    "cleanup_on_startup": True,
-    "custom_undo_redo_levels": 20,
-    "plugins": """
-        anchor autolink charmap code codesample directionality
-        fullscreen image insertdatetime link lists media
-        nonbreaking pagebreak preview save searchreplace table
-        visualblocks visualchars
-        """,
-    "toolbar1": """
-        bold italic underline superscript subscript fontsizeselect
-        | alignleft alignright | aligncenter alignjustify
-        | indent outdent | bullist numlist |
-        | link visualchars charmap image hr nonbreaking | code preview fullscreen
-        """,
-    "paste_data_images": False,
-    "force_p_newlines": True,  # TODO: could be False?
-    "force_br_newlines": True,  # TODO: could be False?
-    "forced_root_block": "",
-    "contextmenu": "formats | link",
-    "menubar": False,
-    "statusbar": False,
-    "invalid_styles": {"*": "opacity"},  # Global invalid style
-    # https://www.tiny.cloud/docs/configure/content-filtering/#invalid_styles
-    # "extended_valid_elements": "iframe[src|frameborder|style|scrolling|class|width|height|name|align]",
-    # If more formatting possibilities needed (or more rows), choose from these:
-    # "toolbar1": """,
-    # fullscreen preview bold italic underline | fontselect,
-    # fontsizeselect  | forecolor backcolor | alignleft alignright |
-    # aligncenter alignjustify | indent outdent | bullist numlist table |
-    # | link image media | codesample |
-    # """,
-    # "toolbar2": """
-    # visualblocks visualchars |
-    # charmap hr pagebreak nonbreaking anchor |  code |
-    # """,
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Restaurant Management System API",
+    "DESCRIPTION": "API documentation for the RMS backend.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }

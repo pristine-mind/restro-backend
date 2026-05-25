@@ -9,16 +9,25 @@ x-server: &base_server_setup
     DB_USER: ${DB_USER:-postgres}
     DB_PASSWORD: ${DB_PASSWORD:-postgres}
     DJANGO_DEBUG: ${DJANGO_DEBUG:-true}
+    REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    DJANGO_ALLOWED_HOST: ${DJANGO_ALLOWED_HOST:-localhost,127.0.0.1}
+    DJANGO_TIME_ZONE: ${DJANGO_TIME_ZONE:-UTC}
+    CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+    CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
+    FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
   env_file:
     - .env
   volumes:
     - .:/code
   depends_on:
-    - db
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_started
 
 services:
   db:
-    image: postgis/postgis:13-3.1-alpine
+    image: postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -29,13 +38,49 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - postgres_data_restro:/var/lib/postgresql/data/
+      - postgres16_data:/var/lib/postgresql/data/
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data_restro:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   web:
     <<: *base_server_setup
     ports:
-      - 8006:8000
+      - "8006:8000"
     command: python manage.py runserver 0.0.0.0:8000
 
+  daphne:
+    <<: *base_server_setup
+    ports:
+      - "8007:8001"
+    command: daphne -b 0.0.0.0 -p 8001 main.asgi:application
+
+  celery-worker:
+    <<: *base_server_setup
+    command: celery -A main worker -l info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  celery-beat:
+    <<: *base_server_setup
+    command: celery -A main beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
 volumes:
-  postgres_data_restro:
+  postgres16_data:
+  redis_data_restro:
