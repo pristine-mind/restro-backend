@@ -3,61 +3,208 @@
 <head>
     <meta charset="utf-8">
     <title>Bill #{{ bill.id }}</title>
+    <style>
+        @page {
+            size: 80mm {{ page_height_mm }}mm;
+            margin: 2mm 3mm;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Courier New", "Courier", "Liberation Mono", monospace;
+            font-size: 8pt;
+            line-height: 1.25;
+            color: #000;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        .center {
+            text-align: center;
+        }
+        .shop-name {
+            font-size: 11pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 1mm;
+        }
+        .small {
+            font-size: 7pt;
+            margin-bottom: 0.5mm;
+        }
+        .sep {
+            text-align: center;
+            font-size: 8pt;
+            margin: 1.5mm 0;
+            letter-spacing: -1px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            font-size: 8pt;
+            padding: 0.3mm 0;
+            vertical-align: top;
+        }
+        .info-table td:first-child {
+            width: 30%;
+        }
+        .items-table th,
+        .items-table td {
+            font-size: 8pt;
+            padding: 0.5mm 0;
+            vertical-align: top;
+        }
+        .items-table thead th {
+            border-bottom: 1px solid #000;
+            padding-bottom: 1mm;
+        }
+        .items-table .col-item {
+            width: 42%;
+            word-break: break-word;
+        }
+        .items-table .col-qty {
+            width: 10%;
+        }
+        .items-table .col-price {
+            width: 22%;
+        }
+        .items-table .col-amt {
+            width: 26%;
+        }
+        .item-note {
+            font-size: 7pt;
+            color: #333;
+            font-style: italic;
+            padding-bottom: 1mm;
+        }
+        .totals-table td {
+            font-size: 8pt;
+            padding: 0.5mm 0;
+        }
+        .totals-table .grand td {
+            font-size: 10pt;
+            font-weight: bold;
+            border-top: 1px solid #000;
+            padding-top: 1.5mm;
+            padding-bottom: 1mm;
+        }
+        .amount-words {
+            font-size: 7pt;
+            font-style: italic;
+            margin-top: 1mm;
+            word-wrap: break-word;
+        }
+        .paid-stamp {
+            text-align: center;
+            font-size: 13pt;
+            font-weight: bold;
+            border: 2px solid #000;
+            margin: 2mm auto;
+            padding: 1.5mm 3mm;
+            width: fit-content;
+            letter-spacing: 1.5mm;
+        }
+        .footer {
+            font-size: 8pt;
+            margin-top: 2mm;
+        }
+    </style>
 </head>
 <body>
-    <div class="header">
-        <h2>{{ settings.restaurant_name }}</h2>
+    <div class="center">
+        <div class="shop-name">{{ settings.restaurant_name }}</div>
         {% if settings.address %}
-        <p>{{ settings.address }}</p>
+        <div class="small">{{ settings.address }}</div>
         {% endif %}
-        <p>Bill #{{ bill.id }}</p>
-        <p>Table: {{ order.table.table_number }}</p>
-        <p>Date: {{ bill.generated_at|date:"Y-m-d H:i" }}</p>
+        <div class="small">Tel: {{ settings.phone|default:"-" }}</div>
     </div>
 
-    <div class="line"></div>
+    <div class="sep">--------------------------------</div>
 
-    <table>
-        {% for item in items %}
-        <tr>
-            <td>{{ item.quantity }}x {{ item.menu_item.name }}</td>
-            <td class="right">{{ item.unit_price }}</td>
-            <td class="right">{{ item.line_total }}</td>
-        </tr>
-        {% if item.notes %}
-        <tr>
-            <td colspan="3" style="font-size: 8pt; color: #555;">Note: {{ item.notes }}</td>
-        </tr>
-        {% endif %}
-        {% endfor %}
+    <table class="info-table">
+        <tr><td>Bill #</td><td>{{ bill.id }}</td></tr>
+        <tr><td>Order #</td><td>{{ order.id }}</td></tr>
+        <tr><td>Table</td><td>{{ order.table.table_number }}</td></tr>
+        <tr><td>Date</td><td>{{ bill.generated_at|date:"d M Y" }} {{ bill.generated_at|time:"H:i" }}</td></tr>
+        <tr><td>Staff</td><td>{{ order.staff.first_name|default:order.staff.username }}</td></tr>
     </table>
 
-    <div class="line"></div>
+    <div class="sep">--------------------------------</div>
 
-    <table>
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th class="col-item" align="left">Item</th>
+                <th class="col-qty" align="center">Qty</th>
+                <th class="col-price" align="right">Price</th>
+                <th class="col-amt" align="right">Amt</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td class="col-item">{{ item.menu_item.name }}</td>
+                <td class="col-qty" align="center">{{ item.quantity }}</td>
+                <td class="col-price" align="right">{{ item.unit_price }}</td>
+                <td class="col-amt" align="right">{{ item.line_total }}</td>
+            </tr>
+            {% if item.notes %}
+            <tr>
+                <td colspan="4" class="item-note">* {{ item.notes }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="sep">--------------------------------</div>
+
+    <table class="totals-table">
         <tr>
             <td>Subtotal</td>
-            <td class="right">{{ bill.subtotal }}</td>
+            <td align="right">{{ bill.subtotal }}</td>
         </tr>
-        {% if bill.discount_amount > 0 %}
         <tr>
-            <td>Discount ({{ bill.discount_type }})</td>
-            <td class="right">- {{ bill.discount_amount }}</td>
+            <td>
+                Discount
+                {% if bill.discount_type == "percentage" and bill.discount_value > 0 %}({{ bill.discount_value }}%){% endif %}
+                {% if bill.discount_type == "fixed" and bill.discount_value > 0 %}(Fixed){% endif %}
+            </td>
+            <td align="right">{% if bill.discount_amount > 0 %}-{% endif %}{{ bill.discount_amount }}</td>
         </tr>
-        {% endif %}
         <tr>
             <td>Tax ({{ bill.tax_rate }}%)</td>
-            <td class="right">{{ bill.tax_amount }}</td>
+            <td align="right">{{ bill.tax_amount }}</td>
         </tr>
-        <tr class="total">
-            <td>Total</td>
-            <td class="right">{{ bill.total }}</td>
+        <tr class="grand">
+            <td>TOTAL</td>
+            <td align="right">{{ bill.total }}</td>
         </tr>
     </table>
 
-    <div class="line"></div>
+    <div class="center amount-words">({{ amount_in_words }})</div>
 
-    <p>Payment Method: {{ bill.get_payment_method_display }}</p>
-    <p>Thank you for dining with us!</p>
+    <div class="sep">--------------------------------</div>
+
+    <table class="info-table">
+        <tr><td>Payment</td><td>{{ bill.get_payment_method_display }}</td></tr>
+        {% if bill.paid_at %}
+        <tr><td>Paid at</td><td>{{ bill.paid_at|date:"d M Y" }} {{ bill.paid_at|time:"H:i" }}</td></tr>
+        {% endif %}
+    </table>
+
+    {% if bill.paid_at %}
+    <div class="paid-stamp">PAID</div>
+    {% endif %}
+
+    <div class="sep">--------------------------------</div>
+
+    <div class="center footer">
+        <div>Thank you for dining with us!</div>
+        <div>Please visit again.</div>
+    </div>
 </body>
 </html>

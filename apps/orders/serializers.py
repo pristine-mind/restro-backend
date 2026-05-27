@@ -67,4 +67,4 @@ class OrderSerializer(serializers.ModelSerializer):
             "closed_at",
             "items",
         ]
-        read_only_fields = ["staff", "status", "subtotal", "created_at", "closed_at"]
+        read_only_fields = ["table", "staff", "status", "subtotal", "created_at", "closed_at"]

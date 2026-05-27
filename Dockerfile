@@ -12,6 +12,13 @@ RUN apt-get update -y \
         libgomp1 \
         wait-for-it \
         wkhtmltopdf \
+        libglib2.0-0 \
+        libpango-1.0-0 \
+        libharfbuzz0b \
+        libpangoft2-1.0-0 \
+        libcairo2 \
+        libgdk-pixbuf2.0-0 \
+        shared-mime-info \
     && pip install --upgrade --no-cache-dir pip poetry --root-user-action=ignore \
     && poetry --version \
     && poetry config virtualenvs.create false \

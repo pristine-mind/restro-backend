@@ -32,8 +32,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         return qs.filter(status__in=[Order.Status.OPEN, Order.Status.BILLED])
 
     def get_permissions(self):
-        if self.action == "cancel":
-            return [IsAdmin()]
         return [IsAdminOrStaff()]
 
     def perform_create(self, serializer):

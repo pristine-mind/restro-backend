@@ -16,7 +16,9 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class MenuItemSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
-    category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source="category", write_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), source="category", write_only=True, required=False
+    )
     image_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -36,6 +38,18 @@ class MenuItemSerializer(serializers.ModelSerializer):
             "deleted_at",
         ]
         read_only_fields = ["deleted_at"]
+
+    def to_internal_value(self, data):
+        # Accept `category` as an alias for `category_id` on writes
+        if data and "category" in data and "category_id" not in data:
+            data = data.copy()
+            category_val = data.pop("category")
+            # QueryDict.pop returns a list; dict.pop returns a single value
+            if isinstance(category_val, list):
+                category_val = category_val[0] if category_val else None
+            if category_val is not None and category_val != "":
+                data["category_id"] = category_val
+        return super().to_internal_value(data)
 
     def get_image_url(self, obj):
         request = self.context.get("request")

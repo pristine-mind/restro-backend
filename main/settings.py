@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "django_filters",
     "corsheaders",
     "channels",
+    "django_celery_beat",
     # RMS apps
     "apps.accounts",
     "apps.menu",

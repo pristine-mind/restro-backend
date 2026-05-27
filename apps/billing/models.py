@@ -5,6 +5,7 @@ class SystemSettings(models.Model):
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=13.00)
     restaurant_name = models.CharField(max_length=200, default="My Restaurant")
     address = models.TextField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
     allow_staff_discount = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey("accounts.User", on_delete=models.SET_NULL, null=True)
