@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ ticket_title }} #{{ order.id }}</title>
+    <style>
+        @page {
+            size: 80mm {{ page_height_mm }}mm;
+            margin: 2mm 3mm;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Courier New", "Courier", "Liberation Mono", monospace;
+            font-size: 9pt;
+            line-height: 1.3;
+            color: #000;
+            width: 74mm;
+            max-width: 74mm;
+            margin: 0;
+            padding: 0;
+        }
+        .center {
+            text-align: center;
+        }
+        .shop-name {
+            font-size: 10pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 1mm;
+        }
+        .small {
+            font-size: 7pt;
+            margin-bottom: 0.5mm;
+        }
+        .sep {
+            text-align: center;
+            font-size: 8pt;
+            margin: 1.5mm 0;
+            letter-spacing: -1px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            font-size: 9pt;
+            padding: 0.5mm 0;
+            vertical-align: top;
+        }
+        .info-table td:first-child {
+            width: 35%;
+        }
+        .items-table th,
+        .items-table td {
+            font-size: 9pt;
+            padding: 0.8mm 0;
+            vertical-align: top;
+        }
+        .items-table thead th {
+            border-bottom: 1px dashed #000;
+            padding-bottom: 1mm;
+        }
+        .items-table tr,
+        .items-table thead,
+        .items-table tbody {
+            page-break-inside: avoid;
+        }
+        .items-table .col-qty {
+            width: 18%;
+            text-align: right;
+        }
+        .items-table .col-sn {
+            width: 12%;
+            text-align: left;
+        }
+        .items-table .col-item {
+            width: 70%;
+            word-break: break-word;
+        }
+        .item-note {
+            font-size: 8pt;
+            color: #333;
+            font-style: italic;
+            padding-bottom: 1mm;
+        }
+        .ticket-type {
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: center;
+            margin: 2mm 0;
+            padding: 1mm;
+            border: 2px solid #000;
+        }
+        .footer {
+            font-size: 8pt;
+            margin-top: 2mm;
+            text-align: center;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+    <div class="center">
+        <div class="shop-name">{{ settings.restaurant_name }}</div>
+        {% if settings.address %}
+        <div class="small">{{ settings.address }}</div>
+        {% endif %}
+        <div class="small">Tel: {{ settings.phone|default:"-" }}</div>
+    </div>
+
+    <div class="sep">--------------------------------</div>
+
+    <div class="ticket-type">{{ ticket_title }}</div>
+
+    <div class="sep">--------------------------------</div>
+
+    <table class="info-table">
+        <tr><td>Order #</td><td>{{ order.id }}</td></tr>
+        <tr><td>Table</td><td>{{ order.table.table_number }}</td></tr>
+        <tr><td>Date</td><td>{% now "d M Y H:i" %}</td></tr>
+        <tr><td>Staff</td><td>{{ order.staff.first_name|default:order.staff.username }}</td></tr>
+    </table>
+
+    <div class="sep">--------------------------------</div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th class="col-sn" align="left">S.N</th>
+                <th class="col-item" align="left">Item</th>
+                <th class="col-qty" align="right">Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td class="col-sn" align="left">{{ forloop.counter }}</td>
+                <td class="col-item">{{ item.name }}</td>
+                <td class="col-qty" align="right">{{ item.quantity }}</td>
+            </tr>
+            {% if item.notes %}
+            <tr>
+                <td></td>
+                <td colspan="2" class="item-note">* {{ item.notes }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="sep">--------------------------------</div>
+
+    <div class="center footer">
+        <div>Please prepare immediately.</div>
+        <div>Thank you!</div>
+    </div>
+</body>
+</html>

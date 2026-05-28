@@ -2,8 +2,13 @@ from django.db import models
 
 
 class Category(models.Model):
+    class Station(models.TextChoices):
+        KITCHEN = "kitchen", "Kitchen"
+        BAR = "bar", "Bar"
+
     name = models.CharField(max_length=100, unique=True)
     display_order = models.PositiveSmallIntegerField(default=0)
+    station = models.CharField(max_length=10, choices=Station.choices, default=Station.KITCHEN)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -8,7 +8,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ["id", "name", "display_order", "item_count"]
+        fields = ["id", "name", "display_order", "station", "item_count"]
 
     def get_item_count(self, obj):
         return obj.items.filter(deleted_at__isnull=True).count()

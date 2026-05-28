@@ -61,7 +61,7 @@ services:
     <<: *base_server_setup
     ports:
       - "8007:8001"
-    command: daphne -b 0.0.0.0 -p 8001 main.asgi:application
+    command: watchfiles --filter python "daphne -b 0.0.0.0 -p 8001 main.asgi:application" /code
 
   celery-worker:
     <<: *base_server_setup

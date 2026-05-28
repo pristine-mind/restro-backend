@@ -3,8 +3,9 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.accounts.permissions import IsAdmin, IsAdminOrReadOnly, IsAdminOrStaff
+from apps.accounts.permissions import IsAdminOrReadOnly, IsStaff
 from apps.orders.models import Order
+from apps.orders.services import notify_admin_bill_request
 
 from .models import Table
 from .serializers import TableSerializer
@@ -45,3 +46,35 @@ class TableViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_409_CONFLICT,
             )
         return super().destroy(request, *args, **kwargs)
+
+    @action(detail=True, methods=["post"], url_path="request-bill", permission_classes=[IsStaff])
+    def request_bill(self, request, pk=None):
+        table = self.get_object()
+        order = table.orders.filter(status=Order.Status.OPEN).first()
+
+        if order is None:
+            return Response(
+                {"detail": "No open order found for this table.", "code": "business_rule_violation"},
+                status=status.HTTP_409_CONFLICT,
+            )
+        if not order.items.exists():
+            return Response(
+                {"detail": "Cannot request a bill for an empty order.", "code": "business_rule_violation"},
+                status=status.HTTP_409_CONFLICT,
+            )
+        if hasattr(order, "bill"):
+            return Response(
+                {"detail": "A bill has already been generated for this order.", "code": "business_rule_violation"},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        notify_admin_bill_request(table, order, request.user)
+
+        return Response(
+            {
+                "detail": "Bill request sent to admin.",
+                "code": "bill_request_sent",
+                "table_id": table.pk,
+                "order_id": order.pk,
+            }
+        )

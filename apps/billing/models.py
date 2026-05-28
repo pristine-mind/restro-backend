@@ -23,6 +23,7 @@ class Bill(models.Model):
         CASH = "cash", "Cash"
         CARD = "card", "Card"
         WALLET = "wallet", "Digital Wallet"
+        ESEWA = "esewa", "eSewa"
 
     class DiscountType(models.TextChoices):
         NONE = "none", "None"

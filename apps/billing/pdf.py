@@ -3,14 +3,39 @@ from django.template.loader import render_to_string
 
 from .models import SystemSettings
 
-
 _ONES = [
-    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
-    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
-    "Seventeen", "Eighteen", "Nineteen",
+    "",
+    "One",
+    "Two",
+    "Three",
+    "Four",
+    "Five",
+    "Six",
+    "Seven",
+    "Eight",
+    "Nine",
+    "Ten",
+    "Eleven",
+    "Twelve",
+    "Thirteen",
+    "Fourteen",
+    "Fifteen",
+    "Sixteen",
+    "Seventeen",
+    "Eighteen",
+    "Nineteen",
 ]
 _TENS = [
-    "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety",
+    "",
+    "",
+    "Twenty",
+    "Thirty",
+    "Forty",
+    "Fifty",
+    "Sixty",
+    "Seventy",
+    "Eighty",
+    "Ninety",
 ]
 
 
@@ -27,7 +52,8 @@ def _num_to_words_below_thousand(n: int) -> str:
 def amount_in_words(amount) -> str:
     """Convert a Decimal/float to words in Nepali Rupees format."""
     try:
-        from decimal import Decimal, ROUND_HALF_UP
+        from decimal import ROUND_HALF_UP, Decimal
+
         amount = Decimal(str(amount))
     except Exception:
         return ""
@@ -77,7 +103,7 @@ def generate_bill_pdf(bill) -> bytes:
     # Calculate receipt height to avoid A4 fallback
     # WeasyPrint ignores 'auto' in @page size, so we set an exact height.
     base_height = 100  # mm: header, separators, info, totals, footer
-    item_height = 8    # mm per item (conservative: row + possible note)
+    item_height = 8  # mm per item (conservative: row + possible note)
     paid_stamp_height = 15 if bill.paid_at else 0
     padding = 15
     page_height = base_height + (len(items) * item_height) + paid_stamp_height + padding

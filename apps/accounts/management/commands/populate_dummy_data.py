@@ -1,13 +1,14 @@
 import random
 from decimal import Decimal
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from apps.accounts.models import User
+from apps.billing.models import Bill, SystemSettings
 from apps.menu.models import Category, MenuItem
-from apps.tables.models import Table
 from apps.orders.models import Order, OrderItem
-from apps.billing.models import SystemSettings, Bill
+from apps.tables.models import Table
 
 
 class Command(BaseCommand):
@@ -226,6 +227,7 @@ class Command(BaseCommand):
 
                 if status == "paid":
                     from django.utils import timezone
+
                     bill.paid_at = timezone.now()
                     bill.save(update_fields=["paid_at"])
                     order.closed_at = timezone.now()

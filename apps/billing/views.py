@@ -100,6 +100,13 @@ class DailyReportView(APIView):
 
         bills = Bill.objects.filter(generated_at__date=date)
         total_revenue = bills.aggregate(total=Sum("total"))["total"] or 0
+        revenue_by_payment_method = {payment_method: 0 for payment_method, _ in Bill.PaymentMethod.choices}
+        revenue_by_payment_method.update(
+            {
+                entry["payment_method"]: entry["total_revenue"] or 0
+                for entry in bills.values("payment_method").annotate(total_revenue=Sum("total"))
+            }
+        )
         total_bills = bills.count()
         total_orders = Order.objects.filter(created_at__date=date).count()
 
@@ -107,6 +114,7 @@ class DailyReportView(APIView):
             {
                 "date": date.isoformat(),
                 "total_revenue": total_revenue,
+                "revenue_by_payment_method": revenue_by_payment_method,
                 "total_bills": total_bills,
                 "total_orders": total_orders,
             }

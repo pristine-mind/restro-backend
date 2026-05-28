@@ -57,6 +57,7 @@ weasyprint = "^68.1"
 drf-nested-routers = "^0.95.0"
 daphne = "^4.2.1"
 gunicorn = "^26.0.0"
+watchfiles = "^1.1.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
