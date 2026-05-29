@@ -57,22 +57,27 @@
             padding: 0.5mm 0;
             vertical-align: top;
         }
+        .items-table tr,
+        .items-table thead,
+        .items-table tbody {
+            page-break-inside: avoid;
+        }
         .items-table thead th {
             border-bottom: 1px solid #000;
             padding-bottom: 1mm;
         }
         .items-table .col-item {
-            width: 38%;
+            width: 42%;
             word-break: break-word;
         }
         .items-table .col-qty {
             width: 10%;
         }
-        .items-table .col-rate {
+        .items-table .col-price {
             width: 22%;
         }
         .items-table .col-amt {
-            width: 30%;
+            width: 26%;
         }
         .item-note {
             font-size: 7pt;
@@ -114,23 +119,18 @@
     </style>
 </head>
 <body>
-    <divisibleby class="center shop-name">Estimated Bill</div>
+    <div class="center">
+        Estimated Bill
+    </div>
+
     <div class="sep">--------------------------------</div>
+
     <table class="info-table">
         <tr><td>Bill #</td><td>{{ bill.id }}</td></tr>
         <tr><td>Order #</td><td>{{ order.id }}</td></tr>
         <tr><td>Table</td><td>{{ order.table.table_number }}</td></tr>
         <tr><td>Date</td><td>{{ bill.generated_at|date:"d M Y" }} {{ bill.generated_at|time:"H:i" }}</td></tr>
         <tr><td>Staff</td><td>{{ order.staff.first_name|default:order.staff.username }}</td></tr>
-        {% if bill.customer_name %}
-        <tr><td>Name</td><td>{{ bill.customer_name }}</td></tr>
-        {% endif %}
-        {% if bill.customer_address %}
-        <tr><td>Address</td><td>{{ bill.customer_address }}</td></tr>
-        {% endif %}
-        {% if bill.customer_pan %}
-        <tr><td>PAN No</td><td>{{ bill.customer_pan }}</td></tr>
-        {% endif %}
     </table>
 
     <div class="sep">--------------------------------</div>
@@ -140,7 +140,7 @@
             <tr>
                 <th class="col-item" align="left">Item</th>
                 <th class="col-qty" align="center">Qty</th>
-                <th class="col-rate" align="right">Rate</th>
+                <th class="col-price" align="right">Price</th>
                 <th class="col-amt" align="right">Amt</th>
             </tr>
         </thead>
@@ -149,7 +149,7 @@
             <tr>
                 <td class="col-item">{{ item.menu_item.name }}</td>
                 <td class="col-qty" align="center">{{ item.quantity }}</td>
-                <td class="col-rate" align="right">{{ item.unit_mrp }}</td>
+                <td class="col-price" align="right">{{ item.unit_price }}</td>
                 <td class="col-amt" align="right">{{ item.line_total }}</td>
             </tr>
             {% if item.notes %}
@@ -176,10 +176,6 @@
             </td>
             <td align="right">{% if bill.discount_amount > 0 %}-{% endif %}{{ bill.discount_amount }}</td>
         </tr>
-        <tr>
-            <td>Tax ({{ bill.tax_rate }}%)</td>
-            <td align="right">{{ bill.tax_amount }}</td>
-        </tr>
         <tr class="grand">
             <td>TOTAL</td>
             <td align="right">{{ bill.total }}</td>
@@ -204,7 +200,8 @@
     <div class="sep">--------------------------------</div>
 
     <div class="center footer">
-        <div>Please collect VAT bill from counter.</div>
+        <div>Please collect your VAT Bill from Billing Counter</div>
+        <div>Please visit again.</div>
     </div>
 </body>
 </html>
