@@ -90,11 +90,13 @@ def generate_bill_pdf(bill) -> bytes:
     settings_obj = SystemSettings.objects.get(pk=1)
     items = []
     for item in bill.order.items.select_related("menu_item").all():
+        unit_mrp = item.unit_mrp if item.unit_mrp is not None else item.unit_price
         items.append(
             {
                 "quantity": item.quantity,
                 "menu_item": item.menu_item,
                 "unit_price": item.unit_price,
+                "unit_mrp": unit_mrp,
                 "notes": item.notes,
                 "line_total": item.quantity * item.unit_price,
             }
@@ -102,10 +104,17 @@ def generate_bill_pdf(bill) -> bytes:
 
     # Calculate receipt height to avoid A4 fallback
     # WeasyPrint ignores 'auto' in @page size, so we set an exact height.
-    base_height = 100  # mm: header, separators, info, totals, footer
+    base_height = 85  # mm: header, separators, base info, totals, footer
+    # Customer details add extra rows to the info table
+    customer_rows = sum([
+        bool(bill.customer_name),
+        bool(bill.customer_address),
+        bool(bill.customer_pan),
+    ])
+    base_height += customer_rows * 4
     item_height = 8  # mm per item (conservative: row + possible note)
     paid_stamp_height = 15 if bill.paid_at else 0
-    padding = 15
+    padding = 20
     page_height = base_height + (len(items) * item_height) + paid_stamp_height + padding
 
     html_string = render_to_string(

@@ -62,17 +62,17 @@
             padding-bottom: 1mm;
         }
         .items-table .col-item {
-            width: 42%;
+            width: 38%;
             word-break: break-word;
         }
         .items-table .col-qty {
             width: 10%;
         }
-        .items-table .col-price {
+        .items-table .col-rate {
             width: 22%;
         }
         .items-table .col-amt {
-            width: 26%;
+            width: 30%;
         }
         .item-note {
             font-size: 7pt;
@@ -114,14 +114,6 @@
     </style>
 </head>
 <body>
-    <div class="center">
-        <div class="shop-name">{{ settings.restaurant_name }}</div>
-        {% if settings.address %}
-        <div class="small">{{ settings.address }}</div>
-        {% endif %}
-        <div class="small">Tel: {{ settings.phone|default:"-" }}</div>
-    </div>
-
     <div class="sep">--------------------------------</div>
 
     <table class="info-table">
@@ -130,6 +122,15 @@
         <tr><td>Table</td><td>{{ order.table.table_number }}</td></tr>
         <tr><td>Date</td><td>{{ bill.generated_at|date:"d M Y" }} {{ bill.generated_at|time:"H:i" }}</td></tr>
         <tr><td>Staff</td><td>{{ order.staff.first_name|default:order.staff.username }}</td></tr>
+        {% if bill.customer_name %}
+        <tr><td>Name</td><td>{{ bill.customer_name }}</td></tr>
+        {% endif %}
+        {% if bill.customer_address %}
+        <tr><td>Address</td><td>{{ bill.customer_address }}</td></tr>
+        {% endif %}
+        {% if bill.customer_pan %}
+        <tr><td>PAN No</td><td>{{ bill.customer_pan }}</td></tr>
+        {% endif %}
     </table>
 
     <div class="sep">--------------------------------</div>
@@ -139,7 +140,7 @@
             <tr>
                 <th class="col-item" align="left">Item</th>
                 <th class="col-qty" align="center">Qty</th>
-                <th class="col-price" align="right">Price</th>
+                <th class="col-rate" align="right">Rate</th>
                 <th class="col-amt" align="right">Amt</th>
             </tr>
         </thead>
@@ -148,7 +149,7 @@
             <tr>
                 <td class="col-item">{{ item.menu_item.name }}</td>
                 <td class="col-qty" align="center">{{ item.quantity }}</td>
-                <td class="col-price" align="right">{{ item.unit_price }}</td>
+                <td class="col-rate" align="right">{{ item.unit_mrp }}</td>
                 <td class="col-amt" align="right">{{ item.line_total }}</td>
             </tr>
             {% if item.notes %}
@@ -203,8 +204,7 @@
     <div class="sep">--------------------------------</div>
 
     <div class="center footer">
-        <div>Thank you for dining with us!</div>
-        <div>Please visit again.</div>
+        <div>Please collect VAT bill from counter.</div>
     </div>
 </body>
 </html>

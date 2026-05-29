@@ -39,6 +39,7 @@ class OrderItem(models.Model):
     menu_item = models.ForeignKey("menu.MenuItem", on_delete=models.PROTECT)
     quantity = models.PositiveSmallIntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)  # price snapshot
+    unit_mrp = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)  # MRP snapshot
     notes = models.CharField(max_length=255, blank=True, default="")
     station = models.CharField(max_length=10, choices=Station.choices, default=Station.KITCHEN)
 

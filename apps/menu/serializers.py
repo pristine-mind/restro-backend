@@ -28,6 +28,7 @@ class MenuItemSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "price",
+            "mrp",
             "is_available",
             "category",
             "category_id",

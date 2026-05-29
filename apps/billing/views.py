@@ -29,6 +29,9 @@ class BillViewSet(viewsets.ModelViewSet):
         discount_type = request.data.get("discount_type", Bill.DiscountType.NONE)
         discount_value = request.data.get("discount_value", 0)
         payment_method = request.data.get("payment_method")
+        customer_name = request.data.get("customer_name", "")
+        customer_address = request.data.get("customer_address", "")
+        customer_pan = request.data.get("customer_pan", "")
 
         if not order_id or not payment_method:
             return Response(
@@ -38,7 +41,16 @@ class BillViewSet(viewsets.ModelViewSet):
 
         order = get_object_or_404(Order, pk=order_id)
         try:
-            bill = generate_bill(order, discount_type, discount_value, payment_method, request.user)
+            bill = generate_bill(
+                order,
+                discount_type,
+                discount_value,
+                payment_method,
+                request.user,
+                customer_name=customer_name,
+                customer_address=customer_address,
+                customer_pan=customer_pan,
+            )
         except ValueError as e:
             return Response(
                 {"detail": str(e), "code": "business_rule_violation"},

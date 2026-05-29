@@ -10,7 +10,8 @@ from apps.tables.models import Table
 from .models import Bill, SystemSettings
 
 
-def generate_bill(order, discount_type, discount_value, payment_method, generated_by):
+def generate_bill(order, discount_type, discount_value, payment_method, generated_by,
+                    customer_name="", customer_address="", customer_pan=""):
     """
     Atomically generates a bill for an open order.
     Raises ValueError for all constraint violations.
@@ -53,6 +54,9 @@ def generate_bill(order, discount_type, discount_value, payment_method, generate
             discount_amount=discount_amount,
             total=total,
             payment_method=payment_method,
+            customer_name=customer_name,
+            customer_address=customer_address,
+            customer_pan=customer_pan,
             generated_by=generated_by,
         )
 

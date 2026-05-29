@@ -18,8 +18,8 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ["id", "order", "menu_item", "menu_item_id", "quantity", "unit_price", "notes", "station"]
-        read_only_fields = ["order", "unit_price", "station"]
+        fields = ["id", "order", "menu_item", "menu_item_id", "quantity", "unit_price", "unit_mrp", "notes", "station"]
+        read_only_fields = ["order", "unit_price", "unit_mrp", "station"]
 
     def create(self, validated_data):
         order = self.context["order"]
@@ -35,12 +35,14 @@ class OrderItemSerializer(serializers.ModelSerializer):
             return existing
 
         unit_price = menu_item.price
+        unit_mrp = menu_item.mrp if menu_item.mrp is not None else menu_item.price
         station = menu_item.category.station if menu_item.category else OrderItem.Station.KITCHEN
         return OrderItem.objects.create(
             order=order,
             menu_item=menu_item,
             quantity=quantity,
             unit_price=unit_price,
+            unit_mrp=unit_mrp,
             notes=notes,
             station=station,
         )
