@@ -13,6 +13,11 @@ class SystemSettings(models.Model):
     class Meta:
         db_table = "rms_system_settings"
 
+    @classmethod
+    def get_solo(cls):
+        settings_obj, _ = cls.objects.get_or_create(pk=1)
+        return settings_obj
+
     def save(self, *args, **kwargs):
         self.pk = 1  # singleton pattern
         super().save(*args, **kwargs)

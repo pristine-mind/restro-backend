@@ -27,7 +27,7 @@ def generate_bill(order, discount_type, discount_value, payment_method, generate
         if hasattr(order, "bill"):
             raise ValueError("Bill already exists for this order.")
 
-        settings = SystemSettings.objects.get(pk=1)
+        settings = SystemSettings.get_solo()
         tax_rate = settings.tax_rate
 
         # Calculate subtotal: sum(quantity * unit_price) per item

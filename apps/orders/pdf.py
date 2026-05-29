@@ -33,7 +33,7 @@ def generate_station_pdf(order, station: str, items: list) -> bytes:
     Renders a kitchen or bar ticket to PDF using a Django template.
     Returns raw PDF bytes.
     """
-    settings_obj = SystemSettings.objects.get(pk=1)
+    settings_obj = SystemSettings.get_solo()
     serialized_items = serialize_station_items(items)
 
     # Keep ticket width fixed at 80mm and use a conservative height estimate so

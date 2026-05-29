@@ -37,27 +37,46 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         return [IsAdminOrStaff()]
 
+    def _build_station_pdf_response(self, order, station, items_snapshot):
+        pdf_bytes = generate_station_pdf(order, station, items_snapshot)
+
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{station}_ticket_order_{order.id}.pdf"'
+        return response
+
     def _build_station_delta_snapshot(self, order, station):
         current_items = list(order.items.filter(station=station).select_related("menu_item"))
         if not current_items:
             return []
 
-        sent_quantities = {}
+        sent_quantities_by_item_id = {}
+        legacy_sent_quantities = {}
         station_logs = order.station_logs.filter(station=station)
         for log in station_logs:
             for item in log.items_snapshot:
+                quantity = item.get("quantity", 0)
+                order_item_id = item.get("order_item_id")
+                if order_item_id is not None:
+                    sent_quantities_by_item_id[order_item_id] = sent_quantities_by_item_id.get(order_item_id, 0) + quantity
+                    continue
+
                 item_key = (item["menu_item_id"], item.get("notes", ""))
-                sent_quantities[item_key] = sent_quantities.get(item_key, 0) + item.get("quantity", 0)
+                legacy_sent_quantities[item_key] = legacy_sent_quantities.get(item_key, 0) + quantity
 
         delta_snapshot = []
         for item in current_items:
-            item_key = (item.menu_item_id, item.notes)
-            unsent_quantity = item.quantity - sent_quantities.get(item_key, 0)
+            sent_quantity = sent_quantities_by_item_id.get(item.id)
+            if sent_quantity is None:
+                item_key = (item.menu_item_id, item.notes)
+                sent_quantity = legacy_sent_quantities.get(item_key, 0)
+
+            unsent_quantity = item.quantity - sent_quantity
             if unsent_quantity <= 0:
                 continue
 
             delta_snapshot.append(
                 {
+                    "order_item_id": item.id,
                     "menu_item_id": item.menu_item_id,
                     "name": item.menu_item.name,
                     "quantity": unsent_quantity,
@@ -171,10 +190,16 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
 
         if not items_snapshot:
+            latest_log = order.station_logs.filter(station=station).order_by("-sent_at", "-id").first()
+            if latest_log:
+                return self._build_station_pdf_response(order, station, latest_log.items_snapshot)
+
             return Response(
                 {"detail": f"No new {station} items to send.", "code": "no_new_items"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        response = self._build_station_pdf_response(order, station, items_snapshot)
 
         OrderStationLog.objects.create(
             order=order,
@@ -183,11 +208,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             items_snapshot=items_snapshot,
         )
 
-        # Generate PDF
-        pdf_bytes = generate_station_pdf(order, station, items_snapshot)
-
-        response = HttpResponse(pdf_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = f'inline; filename="{station}_ticket_order_{order.id}.pdf"'
         return response
 
     @action(detail=True, methods=["get"], url_path="station-logs")
@@ -225,11 +245,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        pdf_bytes = generate_station_pdf(order, station, log.items_snapshot)
-
-        response = HttpResponse(pdf_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = f'inline; filename="{station}_ticket_order_{order.id}.pdf"'
-        return response
+        return self._build_station_pdf_response(order, station, log.items_snapshot)
 
 
 class OrderItemViewSet(viewsets.ModelViewSet):

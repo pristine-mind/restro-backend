@@ -87,7 +87,7 @@ def generate_bill_pdf(bill) -> bytes:
     Renders a bill to PDF using a Django template.
     Returns raw PDF bytes.
     """
-    settings_obj = SystemSettings.objects.get(pk=1)
+    settings_obj = SystemSettings.get_solo()
     items = []
     for item in bill.order.items.select_related("menu_item").all():
         unit_mrp = item.unit_mrp if item.unit_mrp is not None else item.unit_price
